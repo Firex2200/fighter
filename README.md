@@ -3,6 +3,9 @@
 A Smash-style 2D fighting game that runs in a browser — so the same game works on
 a laptop, an iPhone, and an Xbox without being rebuilt for each one.
 
+**Play it online:** https://firex2200.github.io/fighter/ — on an iPhone, open it in
+Safari, tap Share → **Add to Home Screen**, and it installs like an app.
+
 ## The fighter
 
 **Rook Ashvane — "The Wandering Storm."** A drifter from the old highway towns,
@@ -153,6 +156,5 @@ this uses original fighters only.
 
 ## Not built yet
 
-- **Internet hosting.** It plays over your home wifi; it isn't on the web yet.
 - **Grabs and throws**, a character select screen, more stages and fighters.
 - Directional influence, stale moves, and rage — documented, deliberately left out.
