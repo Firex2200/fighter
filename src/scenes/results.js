@@ -12,8 +12,8 @@ export class ResultsScene extends Phaser.Scene {
   }
 
   create() {
-    const cx = this.game.config.width / 2;
-    const cy = this.game.config.height / 2;
+    const cx = this.scale.width / 2;
+    const cy = this.scale.height / 2;
 
     this.add
       // Both players are Rook, so the costume is what identifies the winner.

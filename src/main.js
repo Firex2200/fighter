@@ -11,12 +11,21 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
-// 1280x720 is the Xbox's native dashboard resolution and scales cleanly to every
-// phone. FIT keeps the whole playfield visible rather than cropping it on a TV.
+// Height is fixed at 720 (every size in the game is designed around it); the
+// width follows the screen's shape, so a wide phone fills edge to edge instead
+// of shrinking a 16:9 game with black bars at the sides.
+const HEIGHT = 720;
+function widthForScreen() {
+  // Clamped: portrait phones get the rotate message anyway, and extreme
+  // ultrawides would show past the blast lines.
+  const aspect = Math.min(2.4, Math.max(4 / 3, window.innerWidth / window.innerHeight));
+  return Math.round(HEIGHT * aspect);
+}
+
 const game = new Phaser.Game({
   type: Phaser.AUTO,
-  width: 1280,
-  height: 720,
+  width: widthForScreen(),
+  height: HEIGHT,
   parent: 'game',
   backgroundColor: '#0f1117',
   scale: {
@@ -25,6 +34,9 @@ const game = new Phaser.Game({
   },
   scene: [MatchScene, ResultsScene],
 });
+
+// Rotating a phone or resizing a window reshapes the game to match.
+window.addEventListener('resize', () => game.scale.resize(widthForScreen(), HEIGHT));
 
 // Exposed for debugging from the browser console.
 window.game = game;

@@ -41,11 +41,14 @@
         display: block;
       }
 
-      /* ---------------- touch controls (phones only; see src/touch.js) */
+      /* ---------------- touch controls (phones only; see src/touch.js)
+         Sized from the screen height via --u, capped so tablets don't get giant
+         buttons, and never below Apple's 44px minimum tap size. */
       #touch {
         position: fixed;
         inset: 0;
         pointer-events: none;
+        --u: min(1vh, 4.2px);
       }
       .t-stick-zone {
         position: absolute;
@@ -55,59 +58,83 @@
         width: 50%;
         pointer-events: auto;
       }
+      /* GameCube stick: an octagonal gate with a grey cap. */
       .t-stick-base {
         position: absolute;
-        left: calc(env(safe-area-inset-left) + 110px);
-        top: 68%;
-        width: 104px;
-        height: 104px;
-        margin: -52px 0 0 -52px;
-        border-radius: 50%;
-        border: 2px solid rgba(255, 255, 255, 0.5);
+        left: calc(env(safe-area-inset-left) + var(--u) * 17);
+        top: 70%;
+        width: calc(var(--u) * 24);
+        height: calc(var(--u) * 24);
+        transform: translate(-50%, -50%);
+        clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.2));
         opacity: 0.35;
       }
       .t-stick-knob {
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 46px;
-        height: 46px;
+        width: calc(var(--u) * 11);
+        height: calc(var(--u) * 11);
         border-radius: 50%;
-        background: rgba(255, 255, 255, 0.55);
+        background: radial-gradient(circle at 40% 35%, #e4e6ee, #9a9fae);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
         transform: translate(-50%, -50%);
       }
       .t-buttons {
         position: absolute;
-        right: calc(env(safe-area-inset-right) + 18px);
-        bottom: calc(env(safe-area-inset-bottom) + 14px);
-        width: 196px;
-        height: 196px;
+        right: calc(env(safe-area-inset-right) + var(--u) * 4);
+        bottom: calc(env(safe-area-inset-bottom) + var(--u) * 3);
+        width: calc(var(--u) * 50);
+        height: calc(var(--u) * 42);
       }
       .t-btn {
+        --c: 205, 208, 218;
+        --size: calc(var(--u) * 10.5);
         position: absolute;
-        width: 62px;
-        height: 62px;
-        margin: -31px 0 0 -31px;
+        width: max(44px, var(--size));
+        height: max(44px, var(--size));
+        transform: translate(-50%, -50%);
         border-radius: 50%;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
-        font-weight: 600;
         color: #fff;
-        background: rgba(255, 255, 255, 0.16);
-        border: 2px solid rgba(255, 255, 255, 0.45);
+        background: rgba(var(--c), 0.26);
+        border: 2px solid rgba(var(--c), 0.8);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
         pointer-events: auto;
+        line-height: 1;
+      }
+      .t-btn b {
+        font-size: max(15px, calc(var(--u) * 4.6));
+      }
+      .t-btn small {
+        font-size: max(8px, calc(var(--u) * 2.2));
+        opacity: 0.85;
+        margin-top: 1px;
       }
       .t-btn.down {
-        background: rgba(255, 255, 255, 0.45);
+        background: rgba(var(--c), 0.65);
       }
-      /* Diamond like an Xbox pad: A bottom, X left, Y top, B right. */
-      .b-jump { left: 50%; top: 82%; width: 74px; height: 74px; margin: -37px 0 0 -37px; }
-      .b-attack { left: 16%; top: 50%; }
-      .b-strong { left: 50%; top: 18%; }
-      .b-special { left: 84%; top: 50%; }
-      .b-shield { left: 10%; top: 8%; width: 52px; height: 52px; margin: -26px 0 0 -26px; font-size: 11px; }
+      /* Big green A in the middle, red B below-left, X/Y curved around A,
+         yellow C where the C-stick sits. */
+      .b-a { --c: 47, 179, 122; --size: calc(var(--u) * 15.5); left: 48%; top: 52%; }
+      .b-b { --c: 224, 72, 77; left: 18%; top: 82%; }
+      .b-x { left: 86%; top: 42%; height: max(52px, calc(var(--u) * 15)); border-radius: 48% / 50%; transform: translate(-50%, -50%) rotate(-12deg); }
+      .b-y { left: 45%; top: 10%; width: max(52px, calc(var(--u) * 15)); border-radius: 50% / 48%; transform: translate(-50%, -50%) rotate(-10deg); }
+      .b-c { --c: 242, 194, 48; left: 80%; top: 90%; }
+      /* R: the shield shoulder button, in the top-right corner. */
+      .b-r {
+        --c: 160, 166, 182;
+        left: auto;
+        top: calc(env(safe-area-inset-top) + var(--u) * 5 + 22px);
+        right: calc(env(safe-area-inset-right) + var(--u) * 4);
+        transform: none;
+        width: max(64px, calc(var(--u) * 19));
+        border-radius: calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2) calc(var(--u) * 2);
+      }
 
       /* ---------------- phone held upright */
       #rotate {

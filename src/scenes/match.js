@@ -1,6 +1,7 @@
 import { CHARACTERS, PLAYER_COSTUMES } from '../characters.js';
 import { Fighter, STATE, resolveCombat } from '../fighter.js';
-import { STAGE, VIEW } from '../stage.js';
+import { STAGE } from '../stage.js';
+import { frameCamera, initialCamera } from '../camera.js';
 import { BINDINGS, PlayerInput, anyGamepadConnected } from '../input.js';
 import { COSTUMES, paletteFor, drawRook, poseOf } from '../rook.js';
 import { Cpu } from '../cpu.js';
@@ -12,13 +13,6 @@ const MAX_CATCHUP_STEPS = 5; // never let a background tab spiral into a huge ca
 // A mirror match: both players are Rook, told apart by costume alone.
 const ROSTER = [CHARACTERS.rook, CHARACTERS.rook];
 
-const CAM = {
-  minHalfW: 135, // tight enough that fighters stay readable on a phone
-  maxHalfW: 240, // exactly the blast-line span; wider would just show dead space
-  padding: 70, // keeps fighters off the very edge of frame
-  smoothing: 0.09, // per-frame lerp; higher snaps harder
-};
-
 /**
  * Freeze frames on impact. shortcut: this is a feel approximation, not Ultimate's
  * real hitlag formula, which the research pass did not confirm. Upgrade if hits
@@ -28,18 +22,9 @@ function hitlagFrames(damage) {
   return Math.floor(damage * 0.65) + 5;
 }
 
-/**
- * Keep a view of half-size `half` inside [lo, hi]. If the view is wider than the
- * span it is meant to fit, centre it rather than letting the clamp invert.
- */
 /** True if a player's input this frame shows a human is there. */
 function touchedAnything(s) {
   return s.x !== 0 || s.down || s.jump || s.attackPressed || s.strongPressed;
-}
-
-function clampSpan(value, lo, hi, half) {
-  if (hi - lo <= half * 2) return (lo + hi) / 2;
-  return Math.min(Math.max(value, lo + half), hi - half);
 }
 
 export class MatchScene extends Phaser.Scene {
@@ -48,14 +33,10 @@ export class MatchScene extends Phaser.Scene {
   }
 
   create() {
-    this.originX = this.game.config.width / 2;
-    this.originY = this.game.config.height / 2;
-
-    // Dynamic camera. A fixed view wide enough to show both blast lines leaves the
-    // fighters ~15px tall once scaled to a phone, so the camera tracks them and
-    // only zooms out far enough to keep everyone (and the blast lines) in frame.
-    this.cam = { x: VIEW.centerX, y: VIEW.centerY, halfW: CAM.minHalfW };
-    this.scale_ = this.game.config.width / (2 * this.cam.halfW);
+    // The game's width follows the screen's shape (see main.js), so read the
+    // live size every frame rather than the size it booted with.
+    this.cam = initialCamera(this.scale.height / this.scale.width);
+    this.syncView();
 
     this.fighters = ROSTER.map((c, i) => {
       const f = new Fighter(c, STAGE.spawns[i], i);
@@ -79,7 +60,7 @@ export class MatchScene extends Phaser.Scene {
 
     this.hud = this.fighters.map((f, i) =>
       this.add
-        .text(this.originX + (i === 0 ? -260 : 260), this.game.config.height - 86, '', {
+        .text(0, 0, '', {
           fontFamily: 'ui-monospace, Menlo, monospace',
           fontSize: '44px',
           color: '#ffffff',
@@ -88,7 +69,7 @@ export class MatchScene extends Phaser.Scene {
     );
     this.hudSub = this.fighters.map((f, i) =>
       this.add
-        .text(this.originX + (i === 0 ? -260 : 260), this.game.config.height - 44, '', {
+        .text(0, 0, '', {
           fontFamily: 'ui-monospace, Menlo, monospace',
           fontSize: '20px',
           color: '#8b93a7',
@@ -97,7 +78,7 @@ export class MatchScene extends Phaser.Scene {
     );
 
     this.hint = this.add
-      .text(this.originX, 36, '', {
+      .text(0, 36, '', {
         fontFamily: 'ui-monospace, Menlo, monospace',
         fontSize: '18px',
         color: '#6d748a',
@@ -118,35 +99,19 @@ export class MatchScene extends Phaser.Scene {
     return this.originY - (y - this.cam.y) * this.scale_;
   }
 
-  /** Frame every living fighter, zooming only as far out as needed. */
+  /** Screen centre and world-to-pixel scale for the current camera and size. */
+  syncView() {
+    this.originX = this.scale.width / 2;
+    this.originY = this.scale.height / 2;
+    this.scale_ = this.scale.height / (2 * this.cam.halfH);
+  }
+
+  /** Frame every living fighter; the zoom rules live in camera.js. */
   updateCamera() {
     const alive = this.fighters.filter((f) => f.state !== STATE.DEAD);
-    if (alive.length === 0) return;
-
-    const xs = alive.map((f) => f.x);
-    const ys = alive.map((f) => f.y + f.char.body.h / 2);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-
-    const aspect = this.game.config.height / this.game.config.width;
-    let halfW = (maxX - minX) / 2 + CAM.padding;
-    // Vertical spread can demand a wider view than horizontal spread does.
-    halfW = Math.max(halfW, ((maxY - minY) / 2 + CAM.padding) / aspect);
-    halfW = Math.min(Math.max(halfW, CAM.minHalfW), CAM.maxHalfW);
-
-    const k = CAM.smoothing;
-    this.cam.halfW += (halfW - this.cam.halfW) * k;
-    this.cam.x += ((minX + maxX) / 2 - this.cam.x) * k;
-    this.cam.y += ((minY + maxY) / 2 - this.cam.y) * k;
-
-    // Never pan so far that dead space beyond the blast box fills the screen.
-    const halfH = this.cam.halfW * aspect;
-    this.cam.x = clampSpan(this.cam.x, STAGE.blast.left, STAGE.blast.right, this.cam.halfW);
-    this.cam.y = clampSpan(this.cam.y, STAGE.blast.bottom, STAGE.blast.top, halfH);
-
-    this.scale_ = this.game.config.width / (2 * this.cam.halfW);
+    const points = alive.map((f) => ({ x: f.x, y: f.y + f.char.body.h / 2 }));
+    this.cam = frameCamera(this.cam, points, this.scale.height / this.scale.width);
+    this.syncView();
   }
 
   drawStage() {
@@ -156,7 +121,7 @@ export class MatchScene extends Phaser.Scene {
     // Blast lines, so you can see how much room is left.
     g.lineStyle(2, 0x2a2f3d, 1);
     for (const x of [STAGE.blast.left, STAGE.blast.right]) {
-      g.lineBetween(this.toScreenX(x), 0, this.toScreenX(x), this.game.config.height);
+      g.lineBetween(this.toScreenX(x), 0, this.toScreenX(x), this.scale.height);
     }
 
     for (const p of STAGE.platforms) {
@@ -275,7 +240,17 @@ export class MatchScene extends Phaser.Scene {
       }
     }
 
+    const w = this.scale.width;
+    const h = this.scale.height;
+    // On a phone the thumbs cover the bottom corners, so the damage display
+    // moves to the top; on a laptop or TV it sits at the bottom, like Smash.
+    const onPhone = window.matchMedia('(pointer: coarse)').matches;
+    const [pctY, subY] = onPhone ? [46, 88] : [h - 86, h - 44];
+    this.hint.setX(w / 2);
     this.fighters.forEach((f, i) => {
+      const hx = w / 2 + (i === 0 ? -1 : 1) * Math.min(260, w * 0.22);
+      this.hud[i].setPosition(hx, pctY);
+      this.hudSub[i].setPosition(hx, subY);
       const dim = f.percent > 120 ? '#ff6b6b' : f.percent > 60 ? '#ffd166' : '#ffffff';
       this.hud[i].setText(`${Math.round(f.percent)}%`).setColor(dim);
       // Both players are Rook, so the costume is what tells them apart.
@@ -284,7 +259,6 @@ export class MatchScene extends Phaser.Scene {
     });
 
     // Two lines: how P1 plays, and who P2 is.
-    const onPhone = window.matchMedia('(pointer: coarse)').matches;
     const p1 = anyGamepadConnected()
       ? 'Controller: A jump · X attack · Y strong · B special · bumper shield'
       : onPhone

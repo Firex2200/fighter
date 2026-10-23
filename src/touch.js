@@ -2,7 +2,7 @@
 // named actions as the keyboard and gamepad (see PlayerInput.poll), so no game
 // code knows whether you are touching glass or holding a controller.
 //
-// Left half: a floating joystick — put a thumb down anywhere, drag to steer.
+// Left half: a floating GameCube-style stick — put a thumb down anywhere, drag.
 // Pushing up only aims up; jumping is its own button, so up-attacks and the up
 // special work without jumping by accident.
 
@@ -19,16 +19,20 @@ export const touch = {
 
 const isTouchScreen = () => window.matchMedia('(pointer: coarse)').matches;
 
-const STICK_RADIUS = 46; // px the thumb travels for a full push
-const STICK_DEADZONE = 0.38; // fraction of the radius before it counts
+const STICK_DEADZONE = 0.38; // fraction of a full push before it counts
 
-/** Buttons, laid out like an Xbox pad's face buttons. */
+/**
+ * GameCube layout: big green A in the middle, small red B below-left, X and Y
+ * curved around A (both jump, as in GameCube Smash), yellow C where the
+ * C-stick sits, and R as the shield shoulder. Positions live in index.html.
+ */
 const BUTTONS = [
-  { action: 'jump', label: 'Jump', cls: 'b-jump' },
-  { action: 'attack', label: 'Atk', cls: 'b-attack' },
-  { action: 'strong', label: 'Strong', cls: 'b-strong' },
-  { action: 'special', label: 'Spec', cls: 'b-special' },
-  { action: 'shield', label: 'Shield', cls: 'b-shield' },
+  { action: 'attack', key: 'A', label: 'attack', cls: 'b-a' },
+  { action: 'special', key: 'B', label: 'special', cls: 'b-b' },
+  { action: 'jump', key: 'X', label: 'jump', cls: 'b-x' },
+  { action: 'jump', key: 'Y', label: 'jump', cls: 'b-y' },
+  { action: 'strong', key: 'C', label: 'strong', cls: 'b-c' },
+  { action: 'shield', key: 'R', label: 'shield', cls: 'b-r' },
 ];
 
 export function initTouch() {
@@ -38,13 +42,12 @@ export function initTouch() {
   root.id = 'touch';
   root.innerHTML = `
     <div class="t-stick-zone"><div class="t-stick-base"><div class="t-stick-knob"></div></div></div>
-    <div class="t-buttons">${BUTTONS.map(
-      (b) => `<div class="t-btn ${b.cls}" data-action="${b.action}">${b.label}</div>`
-    ).join('')}</div>`;
+    <div class="t-buttons">${BUTTONS.filter((b) => b.key !== 'R').map(button).join('')}</div>
+    ${button(BUTTONS.find((b) => b.key === 'R'))}`;
   document.body.appendChild(root);
 
   bindStick(root.querySelector('.t-stick-zone'));
-  for (const el of root.querySelectorAll('.t-btn')) bindButton(el);
+  for (const el of root.querySelectorAll('.t-btn')) bindButton(el, root);
 
   // Hide while a controller is connected; the controller then does everything.
   setInterval(() => {
@@ -83,6 +86,7 @@ function bindStick(zone) {
 
   zone.addEventListener('pointermove', (e) => {
     if (e.pointerId !== id) return;
+    const STICK_RADIUS = base.offsetWidth * 0.42; // a full push, scaled with the stick
     let dx = e.clientX - ox;
     let dy = e.clientY - oy;
     const len = Math.hypot(dx, dy);
@@ -101,15 +105,25 @@ function bindStick(zone) {
   zone.addEventListener('pointercancel', release);
 }
 
-function bindButton(el) {
+function button(b) {
+  return `<div class="t-btn ${b.cls}" data-action="${b.action}"><b>${b.key}</b><small>${b.label}</small></div>`;
+}
+
+function bindButton(el, root) {
   const action = el.dataset.action;
+  // An action is held while ANY of its buttons is: X and Y both jump, so
+  // letting go of one must not cancel a jump still held on the other.
   const set = (on) => {
-    touch[action] = on;
     el.classList.toggle('down', on);
+    touch[action] = [...root.querySelectorAll(`[data-action="${action}"]`)].some((b) =>
+      b.classList.contains('down')
+    );
   };
   el.addEventListener('pointerdown', (e) => {
-    el.setPointerCapture(e.pointerId);
-    set(true);
+    set(true); // register the press first: capture can be refused, and must not lose it
+    try {
+      el.setPointerCapture(e.pointerId);
+    } catch {}
   });
   el.addEventListener('pointerup', () => set(false));
   el.addEventListener('pointercancel', () => set(false));
