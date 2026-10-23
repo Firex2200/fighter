@@ -1,0 +1,431 @@
+/* Screens and HUD over the 3D view. Bold italic, outlined type and angled
+   cards, in the spirit of Smash Ultimate's interface. */
+
+:root {
+  --heavy: 'Avenir Next Condensed', 'Arial Narrow', 'Arial Black', 'Helvetica Neue', system-ui, sans-serif;
+  --ink: #07080d;
+  --gold: #ffd25a;
+  --gold2: #ff8f2e;
+}
+
+#ui button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------- HUD cards */
+#hud {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  transform: translateX(-50%);
+  display: flex;
+  gap: clamp(24px, 9vw, 160px);
+  font-family: var(--heavy);
+  pointer-events: none;
+}
+.card {
+  position: relative;
+  width: 214px;
+  height: 78px;
+  padding-left: 86px;
+  box-sizing: border-box;
+  transform: skewX(-10deg);
+  background: linear-gradient(120deg, var(--tint) 0%, rgba(13, 15, 24, 0.92) 70%);
+  border-left: 6px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.card > * {
+  transform: skewX(10deg);
+}
+.card .portrait {
+  position: absolute;
+  left: -6px;
+  bottom: -2px;
+  width: 92px;
+  height: 92px;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+}
+.card .pct {
+  font-size: 54px;
+  font-weight: 800;
+  font-style: italic;
+  line-height: 0.95;
+  margin-top: 2px;
+  -webkit-text-stroke: 2.5px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 var(--ink);
+}
+.card .pct .sign {
+  font-size: 28px;
+  margin-left: 2px;
+}
+.card .name {
+  font-size: 13px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  color: #fff;
+  opacity: 0.9;
+}
+.card .name em {
+  font-style: normal;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-left: 4px;
+  letter-spacing: 0.02em;
+}
+.card .stocks {
+  position: absolute;
+  right: 8px;
+  top: -16px;
+  display: flex;
+  gap: 2px;
+}
+.card .stocks img {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 1px 2px #000);
+}
+.card.bump .pct {
+  animation: bump 0.22s ease-out;
+}
+@keyframes bump {
+  0% { transform: skewX(10deg) scale(1.28) translateX(3px); }
+  40% { transform: skewX(10deg) scale(1.1) translateX(-2px); }
+  100% { transform: skewX(10deg) scale(1); }
+}
+.card.out {
+  filter: grayscale(1) brightness(0.6);
+}
+/* Phones: the thumbs own the bottom corners, so the cards go to the top. */
+@media (pointer: coarse) {
+  #hud {
+    bottom: auto;
+    top: calc(env(safe-area-inset-top) + 18px);
+    transform: translateX(-50%) scale(0.78);
+    transform-origin: top center;
+  }
+}
+
+/* --------------------------------------------------------------- screens */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  pointer-events: auto;
+  font-family: var(--heavy);
+  color: #fff;
+}
+.screen.on {
+  display: flex;
+}
+.mute {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  right: calc(env(safe-area-inset-right) + 14px);
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(10, 12, 20, 0.6);
+  font-size: 13px;
+}
+
+/* Title */
+.title {
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 5vh) 0 calc(env(safe-area-inset-bottom) + 6vh);
+  box-sizing: border-box;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+.logo span {
+  display: inline-block;
+  font-size: min(17vw, 170px);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  transform: skewX(-8deg);
+  background: linear-gradient(180deg, #fff6d6 0%, var(--gold) 45%, var(--gold2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  filter: drop-shadow(0 8px 0 var(--ink)) drop-shadow(0 0 28px rgba(63, 230, 212, 0.45));
+}
+.title .sub {
+  font-size: min(3.6vw, 24px);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px #000;
+}
+.title .sub i {
+  color: #3fe6d4;
+}
+.title .press {
+  font-size: min(3.2vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 6px #000;
+  animation: blink 1.4s ease-in-out infinite;
+}
+@keyframes blink {
+  50% { opacity: 0.35; }
+}
+
+/* Select */
+.select {
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 14px);
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(5, 6, 12, 0.75) 0%, rgba(5, 6, 12, 0) 22%, rgba(5, 6, 12, 0) 60%, rgba(5, 6, 12, 0.8) 100%);
+}
+.select h1 {
+  margin: 0;
+  font-size: min(5vw, 40px);
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 1.5px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 var(--ink);
+}
+.select .players {
+  width: 100%;
+  max-width: 980px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.player {
+  min-width: 0;
+  padding: 10px 14px 12px;
+  border-radius: 10px;
+  background: rgba(10, 12, 20, 0.7);
+  border-top: 4px solid var(--accent, #888);
+  transform: skewX(-6deg);
+}
+.player > * {
+  transform: skewX(6deg);
+}
+.player .tag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 800;
+  font-style: italic;
+}
+.player .cpu-toggle {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  font-weight: 700;
+}
+.swatches {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 6px;
+}
+.swatch {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  background: var(--k);
+  box-shadow: inset 0 -12px 0 var(--o);
+  position: relative;
+  transition: transform 0.12s;
+}
+.swatch span {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--s);
+  box-shadow: 0 0 6px var(--s);
+}
+.swatch.chosen {
+  border-color: #fff;
+  transform: scale(1.15);
+  box-shadow: inset 0 -12px 0 var(--o), 0 0 0 3px var(--accent), 0 0 18px var(--accent);
+}
+.costume-name {
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.fight {
+  padding: 12px 54px;
+  border: 0;
+  border-radius: 8px;
+  transform: skewX(-10deg);
+  background: linear-gradient(180deg, #fff1b8, var(--gold) 40%, var(--gold2));
+  color: var(--ink) !important;
+  font-size: min(6vw, 34px) !important;
+  font-weight: 800 !important;
+  font-style: italic !important;
+  box-shadow: 0 5px 0 var(--ink), 0 0 26px rgba(255, 190, 70, 0.55);
+}
+.select .help {
+  font-size: 13px;
+  opacity: 0.7;
+}
+@media (pointer: coarse) {
+  .select .help {
+    display: none;
+  }
+}
+
+/* Countdown and GAME! banners */
+.banner {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: var(--heavy);
+  font-size: 26vh;
+  font-weight: 800;
+  font-style: italic;
+  color: #fff;
+  -webkit-text-stroke: 5px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 0 10px 0 var(--ink);
+}
+.banner.on {
+  display: flex;
+}
+.banner.pop {
+  animation: pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.banner.go {
+  background: linear-gradient(180deg, #fff6d6, var(--gold) 50%, var(--gold2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 30vh;
+  /* A text-shadow would show through the see-through gradient letters and
+     turn them black, so gradient banners use a drop-shadow filter instead. */
+  text-shadow: none;
+  filter: drop-shadow(0 10px 0 var(--ink));
+}
+@keyframes pop {
+  from { transform: scale(2.2); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.banner.game {
+  font-size: 28vh;
+  transform: skewX(-8deg);
+  background: linear-gradient(180deg, #fff, #ffe9a8 45%, var(--gold2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 10px 0 var(--ink)) drop-shadow(0 0 40px rgba(255, 210, 90, 0.6));
+  animation: slam 0.5s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+@keyframes slam {
+  from { transform: skewX(-8deg) scale(3); opacity: 0; }
+  to { transform: skewX(-8deg) scale(1); opacity: 1; }
+}
+
+/* Results */
+.results {
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 calc(env(safe-area-inset-right) + 5vw) 0 0;
+  background: linear-gradient(90deg, rgba(5, 6, 12, 0) 35%, rgba(5, 6, 12, 0.85) 75%);
+}
+.results > * {
+  position: relative;
+}
+.results .winner,
+.results .stats,
+.results .actions {
+  width: min(420px, 46vw);
+}
+.results {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+}
+.results .label {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+.results .who {
+  display: block;
+  font-size: min(7vw, 54px);
+  font-weight: 800;
+  font-style: italic;
+  -webkit-text-stroke: 2px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 0 4px 0 var(--ink);
+}
+.stats {
+  border-collapse: collapse;
+  font-size: 17px;
+}
+.stats th,
+.stats td {
+  padding: 6px 10px;
+  text-align: right;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.stats td:first-child {
+  text-align: left;
+  opacity: 0.8;
+  font-weight: 600;
+}
+.stats th {
+  font-style: italic;
+  font-size: 20px;
+}
+.actions {
+  display: flex;
+  gap: 12px;
+}
+.actions button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 0;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  font-style: italic !important;
+  transform: skewX(-8deg);
+}
+.actions .rematch {
+  background: linear-gradient(180deg, #fff1b8, var(--gold) 40%, var(--gold2));
+  color: var(--ink) !important;
+  box-shadow: 0 4px 0 var(--ink);
+}
+.actions .change {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+.title .head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}

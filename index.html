@@ -14,6 +14,15 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
     <link rel="icon" href="icons/icon-192.png" />
+    <link rel="stylesheet" href="ui.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three/three.module.js",
+          "three/addons/": "./vendor/three/addons/"
+        }
+      }
+    </script>
     <style>
       html,
       body {
@@ -30,15 +39,21 @@
         -webkit-touch-callout: none;
         font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
       }
-      #game {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      #world {
+        position: fixed;
+        inset: 0;
       }
-      canvas {
+      #world canvas {
         display: block;
+      }
+      #ui {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+      /* Touch buttons only during the fight; menus are tapped directly. */
+      body:not(.in-match) #touch {
+        display: none !important;
       }
 
       /* ---------------- touch controls (phones only; see src/touch.js)
@@ -178,9 +193,9 @@
     </style>
   </head>
   <body>
-    <div id="game"></div>
+    <div id="world"></div>
+    <div id="ui"></div>
     <div id="rotate">Turn your phone sideways to play</div>
-    <script src="vendor/phaser.min.js"></script>
     <script src="vendor/qrcode.min.js"></script>
     <script type="module" src="src/main.js"></script>
   </body>
