@@ -21,8 +21,8 @@ headband, wide sleeves with a cloud pattern, striped shin wraps and straw
 sandals, a woven hat on his back, and his sword **Raimei** (black scabbard with a
 teal stripe, cyan gem guard, lightning along the blade in storm form).
 
-He's built in 3D from code rather than loaded from model files, so a costume is
-an exact three-colour swap rather than a hue shift. His
+His 3D model was built in Blender from the front, side and back concept art;
+costumes recolour its kimono, sleeve pattern, sash and hakama. His
 stats come straight off the concept sheet (Weight 5, Ground 8, Air 7, Power 7,
 Range 8, Recovery 6) — the mapping to game values is documented at the top of
 `src/characters.js`.
@@ -162,9 +162,11 @@ why the drawing could be swapped from 2D to 3D without changing how it plays.
 and it steps down automatically if frames run slow. Add `?quality=low` to the
 address to force the lightest setting.
 
-**Rook's 3D model** is built from shapes in code (`src/render/rook3d.js`). A
-sculpted model, e.g. generated from the concept turnaround, can replace it later:
-it only has to follow the same pose data from `rigPose()` in `src/rook.js`.
+**Rook's 3D model** is `models/rook.glb`: shaped from the outlines of the
+front and side concept art, painted with the front, side and back pictures, and
+given a skeleton, all in Blender. `src/render/rookModel.js` poses its bones from
+`rigPose()` in `src/rook.js`. If the file can't load, the game uses the
+shape-built figure in `src/render/rook3d.js` instead.
 
 ### The 2D version
 

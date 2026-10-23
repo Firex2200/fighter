@@ -3,15 +3,15 @@
 // percent of his height, x forward, y up, z toward the camera; the root then
 // scales him to his in-game height.
 //
-// shortcut: a primitive-built figure, not a sculpted model. When a real rigged
-// model exists (e.g. generated from the concept turnaround), replace this file's
-// build() and keep update(): the rig data it consumes stays the same.
+// When the sculpted model (rookModel.js) has loaded, it replaces the body
+// shapes; the sword, sheath, effects and all posing logic here stay in use.
 
 import * as THREE from 'three';
 import { rigPose, poseOf, SHOULDER } from '../rook.js';
 import { shieldScale } from '../combat.js';
 import { STATE } from '../fighter.js';
 import { rimMaterial, glowMaterial } from './materials.js';
+import { RookModel, hasModel } from './rookModel.js';
 
 const DEG = Math.PI / 180;
 const HIP_Y = 52;
@@ -425,6 +425,14 @@ export class Rook3D {
     );
     this.trailMesh.frustumCulled = false;
     this.scene.add(this.trailMesh);
+
+    if (hasModel) {
+      const keep = new Set([this.blade, this.sheath, this.stars]);
+      for (const c of this.body.children) c.visible = keep.has(c);
+      this.model = new RookModel(pal, this.opts);
+      this.mats.model = this.model.material; // dims and flashes with the rest
+      this.body.add(this.model.root);
+    }
   }
 
   /** Swap the costume's colours without rebuilding anything. */
@@ -438,6 +446,7 @@ export class Rook3D {
     set(this.mats.obi, pal.obi);
     this.mats.sleeve.map = kimonoTexture(pal.kimono, pal.pattern);
     this.mats.sleeve.needsUpdate = true;
+    this.model?.setPalette(pal);
     for (const k of ['mark', 'gem', 'edge', 'star']) this.mats[k].emissive.set(pal.spark);
     this.lightning.material.color.set(pal.spark).multiplyScalar(3);
     this.shield.material.uniforms.uColor.value.set(pal.spark);
@@ -491,12 +500,16 @@ export class Rook3D {
     this.hand.position.set(reach, 0, 0);
     this.wrist.position.set(Math.max(1, reach - 4.5), 0, 0);
 
+    // The model's arm is longer than the shape figure's: the blade goes where
+    // its hand actually is.
+    const hand = this.model ? this.model.pose(r) : [...r.hand, 9];
+
     // Blade: drawn and swinging during attacks, sheathed otherwise.
     const drawn = !!r.blade;
     this.blade.visible = drawn;
     this.sheathHilt.visible = !drawn;
     if (drawn) {
-      this.blade.position.set(r.hand[0], r.hand[1], 9);
+      this.blade.position.set(...hand);
       this.blade.rotation.z = r.blade.a * DEG;
       this.bladeSteel.scale.x = r.blade.len;
       this.bladeEdge.scale.x = r.blade.len;
@@ -539,7 +552,7 @@ export class Rook3D {
 
     this.root.updateMatrixWorld(true);
     this.updateShield(fighter);
-    this.updateTrail(drawn && r.blade.trail ? { a: r.blade.a, hx: r.hand[0], hy: r.hand[1], len: r.blade.len } : null);
+    this.updateTrail(drawn && r.blade.trail ? { a: r.blade.a, hx: hand[0], hy: hand[1], hz: hand[2], len: r.blade.len } : null);
   }
 
   updateShield(f) {
@@ -586,7 +599,7 @@ export class Rook3D {
       const fade = k <= span ? Math.pow(1 - kk / span, 1.6) : 0;
       // Inner edge near the hand is faint, the tip edge is bright.
       [len * 0.35, len + 2].forEach((r, j) => {
-        v.set(hx + Math.cos(a) * r, hy + Math.sin(a) * r, 9).applyMatrix4(m);
+        v.set(hx + Math.cos(a) * r, hy + Math.sin(a) * r, p.hz).applyMatrix4(m);
         pos.setXYZ(k * 2 + j, v.x, v.y, v.z);
         alpha.setX(k * 2 + j, fade * (j ? 1 : 0.1));
       });
