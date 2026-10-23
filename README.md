@@ -13,10 +13,13 @@ born in a thunderstorm to a village swordsmith and a storm spirit. Straw hat, lo
 blade, short temper. Push him far enough and the blade's edge splits open to let
 the storm out — which is why it only lights up when he attacks.
 
-Both players are Rook, told apart by costume: **Default** (indigo / saffron /
-teal), **Ember** (charcoal / red / gold), **Frost** (white / blue / ice) or
-**Moss** (green / lime / mint), picked on the costume-select screen before each
-fight.
+Both players are Rook, told apart by costume: **Indigo**, **Ember** (red
+kimono, brown hakama), **Frost** (white kimono, pale blue sash) or **Moss**
+(green kimono, cream sash), picked on the costume-select screen before each
+fight. His look follows the concept sheet: spiky swept-back hair with a gold
+headband, wide sleeves with a cloud pattern, striped shin wraps and straw
+sandals, a woven hat on his back, and his sword **Raimei** (black scabbard with a
+teal stripe, cyan gem guard, lightning along the blade in storm form).
 
 He's built in 3D from code rather than loaded from model files, so a costume is
 an exact three-colour swap rather than a hue shift. His

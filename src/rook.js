@@ -10,26 +10,32 @@
 
 import { STATE, DEFENSE } from './fighter.js';
 
-/** Fixed colours, identical across every costume. */
+/** Fixed colours, identical across every costume (from the concept sheet). */
 const BASE = {
-  hakama: 0x2b2e40, // Hakama charcoal
-  straw: 0xc49a4c, // Straw
-  hair: 0x1d2040, // Night hair
+  straw: 0xc49a4c, // hat and sandal soles
+  hair: 0x232a50, // night-blue hair
   skin: 0xf2d2b3,
-  sandal: 0xf3ead6,
+  gold: 0xe0a23a, // headband, hilt wrap, tassels, scabbard fittings
+  collar: 0xebe3d6, // white inner collar
+  wrap: 0x23263a, // wrist and shin wraps
+  wrapStripe: 0xd8d0c2,
+  strap: 0x2a2228, // sandal straps
   steel: 0x8f9bb8,
+  scabbard: 0x15161d,
   ink: 0x12141f,
 };
 
 /**
- * The four costumes from the concept sheet. Only three slots change per costume —
- * values sampled directly from the document, not estimated.
+ * The four costumes from the concept sheet's ALT COLORS row: kimono, its sleeve
+ * pattern, the sash (obi) and the hakama change per costume. Sampled from the
+ * sheet (averaged patches, lit areas, paper tint discounted). `spark` is the
+ * storm glow: eyes, blade edge, effects.
  */
 export const COSTUMES = {
-  default: { name: 'Default', kimono: 0x2e3271, obi: 0xf1a93b, spark: 0x3fe6d4 },
-  ember: { name: 'Ember', kimono: 0x3a3a42, obi: 0xe06039, spark: 0xffca4a },
-  frost: { name: 'Frost', kimono: 0xdce4ef, obi: 0x4d7fd6, spark: 0xa0e8ff },
-  moss: { name: 'Moss', kimono: 0x1f3b2d, obi: 0xc9d45c, spark: 0x7cefa1 },
+  default: { name: 'Indigo', kimono: 0x3e4573, pattern: 0xd6cdc6, obi: 0xe29b3c, hakama: 0x3a3537, spark: 0x3fe6d4 },
+  ember: { name: 'Ember', kimono: 0xa8432f, pattern: 0xd08a72, obi: 0xe5993c, hakama: 0x573d31, spark: 0xffca4a },
+  frost: { name: 'Frost', kimono: 0xe6ded8, pattern: 0x6a86c6, obi: 0x9aa3c2, hakama: 0x5a5658, spark: 0xa0e8ff },
+  moss: { name: 'Moss', kimono: 0x56614a, pattern: 0xb5ae98, obi: 0xc4ac8c, hakama: 0x554739, spark: 0x7cefa1 },
 };
 
 export function paletteFor(costumeKey) {

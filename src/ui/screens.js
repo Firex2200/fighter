@@ -37,7 +37,7 @@ export class Screens {
               <div class="tag">P${p + 1}${p === 1 ? '<button class="cpu-toggle"></button>' : ''}</div>
               <div class="swatches">${KEYS.map(
                 (k) => `<button class="swatch" data-key="${k}" aria-label="${COSTUMES[k].name}"
-                  style="--k:${hex(COSTUMES[k].kimono)};--o:${hex(COSTUMES[k].obi)};--s:${hex(COSTUMES[k].spark)}"><span></span></button>`
+                  style="--k:${hex(COSTUMES[k].kimono)};--o:${hex(COSTUMES[k].obi)};--h:${hex(COSTUMES[k].hakama)};--s:${hex(COSTUMES[k].spark)}"><span></span></button>`
               ).join('')}</div>
               <div class="costume-name"></div>
             </div>`

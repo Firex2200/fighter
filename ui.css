@@ -242,8 +242,8 @@
   height: 46px;
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.25);
-  background: var(--k);
-  box-shadow: inset 0 -12px 0 var(--o);
+  /* Kimono on top, the sash across the middle, the hakama below. */
+  background: linear-gradient(180deg, var(--k) 0 47%, var(--o) 47% 62%, var(--h) 62%);
   position: relative;
   transition: transform 0.12s;
 }
@@ -260,7 +260,7 @@
 .swatch.chosen {
   border-color: #fff;
   transform: scale(1.15);
-  box-shadow: inset 0 -12px 0 var(--o), 0 0 0 3px var(--accent), 0 0 18px var(--accent);
+  box-shadow: 0 0 0 3px var(--accent), 0 0 18px var(--accent);
 }
 .costume-name {
   font-size: 15px;
