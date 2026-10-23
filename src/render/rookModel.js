@@ -13,14 +13,21 @@ import { clone } from 'three/addons/utils/SkeletonUtils.js';
 import { rimMaterial } from './materials.js';
 import { COSTUMES, SHOULDER } from '../rook.js';
 
-const gltf = await new GLTFLoader()
+// Loads in the background so the game starts at once; Rook3D switches over
+// when it arrives (after the first visit it comes from the offline cache).
+let gltf = null;
+export const modelReady = new GLTFLoader()
   .loadAsync(new URL('../../models/rook.glb', import.meta.url).href)
+  .then((g) => {
+    gltf = g;
+    return true;
+  })
   .catch((err) => {
     console.warn('Rook model did not load; using the built-in figure.', err);
-    return null;
+    return false;
   });
 
-export const hasModel = !!gltf;
+export const hasModel = () => !!gltf;
 
 const Y = new THREE.Vector3(0, 1, 0);
 const DEFAULT = COSTUMES.default;

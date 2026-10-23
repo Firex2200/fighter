@@ -11,7 +11,7 @@ import { rigPose, poseOf, SHOULDER } from '../rook.js';
 import { shieldScale } from '../combat.js';
 import { STATE } from '../fighter.js';
 import { rimMaterial, glowMaterial } from './materials.js';
-import { RookModel, hasModel } from './rookModel.js';
+import { RookModel, hasModel, modelReady } from './rookModel.js';
 
 const DEG = Math.PI / 180;
 const HIP_Y = 52;
@@ -426,13 +426,18 @@ export class Rook3D {
     this.trailMesh.frustumCulled = false;
     this.scene.add(this.trailMesh);
 
-    if (hasModel) {
-      const keep = new Set([this.blade, this.sheath, this.stars]);
-      for (const c of this.body.children) c.visible = keep.has(c);
-      this.model = new RookModel(pal, this.opts);
-      this.mats.model = this.model.material; // dims and flashes with the rest
-      this.body.add(this.model.root);
-    }
+    this.pal = pal;
+    if (hasModel()) this.attachModel();
+    else modelReady.then((ok) => ok && !this.disposed && this.attachModel());
+  }
+
+  /** Swap the body shapes for the sculpted model; sword and effects stay. */
+  attachModel() {
+    const keep = new Set([this.blade, this.sheath, this.stars]);
+    for (const c of this.body.children) c.visible = keep.has(c);
+    this.model = new RookModel(this.pal, this.opts);
+    this.mats.model = this.model.material; // dims and flashes with the rest
+    this.body.add(this.model.root);
   }
 
   /** Swap the costume's colours without rebuilding anything. */
@@ -446,6 +451,7 @@ export class Rook3D {
     set(this.mats.obi, pal.obi);
     this.mats.sleeve.map = kimonoTexture(pal.kimono, pal.pattern);
     this.mats.sleeve.needsUpdate = true;
+    this.pal = pal;
     this.model?.setPalette(pal);
     for (const k of ['mark', 'gem', 'edge', 'star']) this.mats[k].emissive.set(pal.spark);
     this.lightning.material.color.set(pal.spark).multiplyScalar(3);
@@ -609,6 +615,7 @@ export class Rook3D {
   }
 
   dispose() {
+    this.disposed = true;
     this.scene.remove(this.root, this.shield, this.trailMesh);
   }
 }

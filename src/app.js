@@ -6,6 +6,7 @@
 // drawing happens once per screen refresh.
 
 import { World } from './render/world.js';
+import { modelReady } from './render/rookModel.js';
 import { Match } from './match.js';
 import { frameCamera, initialCamera } from './camera.js';
 import { BINDINGS, PlayerInput } from './input.js';
@@ -35,7 +36,10 @@ export class App {
     this.sound = new Sound();
 
     // Portraits for the HUD, rendered once per costume from the 3D model.
-    this.portraits = Object.fromEntries(COSTUME_KEYS.map((k) => [k, this.world.portrait(paletteFor(k))]));
+    const portraits = () => Object.fromEntries(COSTUME_KEYS.map((k) => [k, this.world.portrait(paletteFor(k))]));
+    this.portraits = portraits();
+    // Redrawn once the sculpted model arrives; the HUD shares this object.
+    modelReady.then((ok) => ok && Object.assign(this.portraits, portraits()));
 
     const ui = document.getElementById('ui');
     this.hud = new Hud(ui, this.portraits);
