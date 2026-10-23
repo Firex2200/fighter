@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fighter</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="apple-mobile-web-app-title" content="Fighter" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon-180.png" />
+    <link rel="icon" href="icons/icon-192.png" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0f1117;
+        overflow: hidden;
+        /* Stop iOS rubber-banding and double-tap zoom during play. */
+        overscroll-behavior: none;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+        /* No "copy / look up" popup when a thumb rests on a button. */
+        -webkit-touch-callout: none;
+        font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+      }
+      #game {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      canvas {
+        display: block;
+      }
+
+      /* ---------------- touch controls (phones only; see src/touch.js) */
+      #touch {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+      .t-stick-zone {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 50%;
+        pointer-events: auto;
+      }
+      .t-stick-base {
+        position: absolute;
+        left: calc(env(safe-area-inset-left) + 110px);
+        top: 68%;
+        width: 104px;
+        height: 104px;
+        margin: -52px 0 0 -52px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        opacity: 0.35;
+      }
+      .t-stick-knob {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.55);
+        transform: translate(-50%, -50%);
+      }
+      .t-buttons {
+        position: absolute;
+        right: calc(env(safe-area-inset-right) + 18px);
+        bottom: calc(env(safe-area-inset-bottom) + 14px);
+        width: 196px;
+        height: 196px;
+      }
+      .t-btn {
+        position: absolute;
+        width: 62px;
+        height: 62px;
+        margin: -31px 0 0 -31px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: rgba(255, 255, 255, 0.16);
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        pointer-events: auto;
+      }
+      .t-btn.down {
+        background: rgba(255, 255, 255, 0.45);
+      }
+      /* Diamond like an Xbox pad: A bottom, X left, Y top, B right. */
+      .b-jump { left: 50%; top: 82%; width: 74px; height: 74px; margin: -37px 0 0 -37px; }
+      .b-attack { left: 16%; top: 50%; }
+      .b-strong { left: 50%; top: 18%; }
+      .b-special { left: 84%; top: 50%; }
+      .b-shield { left: 10%; top: 8%; width: 52px; height: 52px; margin: -26px 0 0 -26px; font-size: 11px; }
+
+      /* ---------------- phone held upright */
+      #rotate {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        background: #0f1117;
+        color: #cfd5e3;
+        font-size: 20px;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+      }
+      @media (pointer: coarse) and (orientation: portrait) {
+        #rotate {
+          display: flex;
+        }
+      }
+
+      /* ---------------- laptop: QR code to open the game on a phone */
+      #phone-qr {
+        position: fixed;
+        right: 14px;
+        bottom: 14px;
+        width: 112px;
+        padding: 8px 8px 6px;
+        background: #fff;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 11px;
+        color: #222;
+      }
+      #phone-qr svg {
+        width: 96px;
+        height: 96px;
+        display: block;
+        margin: 0 auto 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="rotate">Turn your phone sideways to play</div>
+    <script src="vendor/phaser.min.js"></script>
+    <script src="vendor/qrcode.min.js"></script>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
