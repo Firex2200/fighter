@@ -73,12 +73,39 @@ class Particles {
   }
 }
 
+/** A streak that is brightest at its root and along its centre line. */
+function beamTexture() {
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 32;
+  const g = c.getContext('2d');
+  const along = g.createLinearGradient(0, 0, 128, 0);
+  along.addColorStop(0, 'rgba(255,255,255,1)');
+  along.addColorStop(0.6, 'rgba(255,255,255,0.55)');
+  along.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = along;
+  g.fillRect(0, 0, 128, 32);
+  // Fade the edges across the width so the beam has no hard sides.
+  g.globalCompositeOperation = 'destination-in';
+  const across = g.createLinearGradient(0, 0, 0, 32);
+  across.addColorStop(0, 'rgba(0,0,0,0)');
+  across.addColorStop(0.5, 'rgba(0,0,0,1)');
+  across.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = across;
+  g.fillRect(0, 0, 128, 32);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 /** Flat shapes that grow and fade: impact rings, KO beams, halos. */
 class Flashes {
   constructor(scene, count) {
     this.items = [];
+    // Beams and discs get soft textures; rings stay crisp.
+    this.maps = { beam: beamTexture(), disc: softDotTexture(), ring: null };
     const ring = new THREE.RingGeometry(0.75, 1, 40);
-    const disc = new THREE.CircleGeometry(1, 32);
+    const disc = new THREE.PlaneGeometry(2, 2); // with the soft dot texture, reads as a glow
     const beam = new THREE.PlaneGeometry(1, 1).translate(0.5, 0, 0);
     this.geos = { ring, disc, beam };
     for (let i = 0; i < count; i++) {
@@ -96,6 +123,11 @@ class Flashes {
   spawn({ shape = 'ring', x, y, z = 4, color, s0, s1, life, rot = 0, sy = null, opacity = 0.9 }) {
     const item = this.items.find((it) => it.life <= 0) ?? this.items[0];
     item.mesh.geometry = this.geos[shape];
+    const map = this.maps[shape];
+    if (item.mesh.material.map !== map) {
+      item.mesh.material.map = map;
+      item.mesh.material.needsUpdate = true;
+    }
     item.mesh.material.color.set(color);
     item.mesh.position.set(x, y, z);
     item.mesh.rotation.set(0, 0, rot);
@@ -144,7 +176,7 @@ export class Effects {
     }
     this.glow.emit({ x, y, z: 6, color: 0xffffff, size0: 10 + big * 22, size1: 2, life: 0.12 });
     this.flashes.spawn({ shape: 'ring', x, y, color, s0: 2, s1: 9 + big * 14, life: 0.28 });
-    if (kb > 120) this.flashes.spawn({ shape: 'ring', x, y, color: 0xffffff, s0: 4, s1: 26, life: 0.35, opacity: 0.6 });
+    if (kb > 120) this.flashes.spawn({ shape: 'ring', x, y, color: 0xffffff, s0: 4, s1: 22, life: 0.3, opacity: 0.35 });
     this.shake = Math.max(this.shake, big * 2.2 + (kb > 120 ? 2.5 : 0));
   }
 

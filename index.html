@@ -151,6 +151,24 @@
         border-radius: calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 2) calc(var(--u) * 2);
       }
 
+      #unsupported {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px;
+        background: #0f1117;
+        color: #cfd5e3;
+        font-size: 18px;
+        line-height: 1.5;
+      }
+      #unsupported[hidden] {
+        display: none;
+      }
+
       /* ---------------- phone held upright */
       #rotate {
         display: none;
@@ -196,6 +214,17 @@
     <div id="world"></div>
     <div id="ui"></div>
     <div id="rotate">Turn your phone sideways to play</div>
+    <div id="unsupported" hidden>
+      This browser is too old to run Fighter.<br />
+      On an iPhone, update to the latest iOS; on a computer, update your browser.
+    </div>
+    <script>
+      // The 3D version loads its engine through an import map (iOS 16.4+, recent
+      // browsers). Say so plainly instead of showing a blank screen.
+      if (!(window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports('importmap'))) {
+        document.getElementById('unsupported').hidden = false;
+      }
+    </script>
     <script src="vendor/qrcode.min.js"></script>
     <script type="module" src="src/main.js"></script>
   </body>

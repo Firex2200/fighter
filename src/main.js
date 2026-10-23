@@ -11,7 +11,15 @@ if ('serviceWorker' in navigator && window.isSecureContext) {
 }
 
 // Exposed for debugging from the browser console and the automated checks.
-window.fighter = new App();
+try {
+  window.fighter = new App();
+} catch (err) {
+  // Most likely no WebGL (3D graphics) on this device or browser.
+  const box = document.getElementById('unsupported');
+  box.innerHTML = 'Fighter needs 3D graphics (WebGL), which this browser could not start.<br>Try updating it, or another browser.';
+  box.hidden = false;
+  console.error(err);
+}
 
 /**
  * On a laptop, a QR code that opens the game on a phone. When hosted online it

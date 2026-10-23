@@ -15,7 +15,9 @@ import { rimMaterial, glowMaterial } from './materials.js';
 
 const DEG = Math.PI / 180;
 const HIP_Y = 52;
-const TRAIL_LEN = 8; // blade positions remembered for the swing ribbon
+const TRAIL_LEN = 6; // blade angles remembered for the swing ribbon
+const TRAIL_SUB = 6; // points filled in between each pair, so the ribbon curves
+const TRAIL_PTS = (TRAIL_LEN - 1) * TRAIL_SUB + 1;
 
 // Geometry is identical for every Rook, so it is built once and shared.
 let G = null;
@@ -218,12 +220,12 @@ export class Rook3D {
     );
     this.scene.add(this.shield);
 
-    // Swing ribbon: a strip through recent blade positions, in world space.
+    // Swing ribbon: a curved strip along the arc the blade just swept.
     const trailGeo = new THREE.BufferGeometry();
-    trailGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_LEN * 2 * 3), 3));
-    trailGeo.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(TRAIL_LEN * 2), 1));
+    trailGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_PTS * 2 * 3), 3));
+    trailGeo.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(TRAIL_PTS * 2), 1));
     const idx = [];
-    for (let i = 0; i < TRAIL_LEN - 1; i++) {
+    for (let i = 0; i < TRAIL_PTS - 1; i++) {
       const a = i * 2;
       idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
@@ -231,9 +233,9 @@ export class Rook3D {
     this.trailMesh = new THREE.Mesh(
       trailGeo,
       new THREE.ShaderMaterial({
-        uniforms: { uColor: { value: new THREE.Color(pal.spark).multiplyScalar(1.8) } },
+        uniforms: { uColor: { value: new THREE.Color(pal.spark).multiplyScalar(1.5) } },
         vertexShader: `attribute float alpha; varying float vA; void main(){ vA = alpha; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-        fragmentShader: `uniform vec3 uColor; varying float vA; void main(){ gl_FragColor = vec4(uColor, vA*0.7); }`,
+        fragmentShader: `uniform vec3 uColor; varying float vA; void main(){ gl_FragColor = vec4(uColor, vA*0.55); }`,
         transparent: true,
         depthWrite: false,
         side: THREE.DoubleSide,
@@ -254,7 +256,7 @@ export class Rook3D {
     set(this.mats.obi, pal.obi);
     for (const k of ['eye', 'edge', 'star']) this.mats[k].emissive.set(pal.spark);
     this.shield.material.uniforms.uColor.value.set(pal.spark);
-    this.trailMesh.material.uniforms.uColor.value.set(pal.spark).multiplyScalar(1.8);
+    this.trailMesh.material.uniforms.uColor.value.set(pal.spark).multiplyScalar(1.5);
   }
 
   /**
@@ -339,7 +341,7 @@ export class Rook3D {
 
     this.root.updateMatrixWorld(true);
     this.updateShield(fighter);
-    this.updateTrail(drawn && r.blade.trail, drawn ? r.blade.len : 0);
+    this.updateTrail(drawn && r.blade.trail ? { a: r.blade.a, hx: r.hand[0], hy: r.hand[1], len: r.blade.len } : null);
   }
 
   updateShield(f) {
@@ -352,29 +354,47 @@ export class Rook3D {
     this.shield.material.uniforms.uAlpha.value = f.shieldstun > 0 ? 0.85 : 0.5;
   }
 
-  /** Keep the last few blade positions and draw a fading ribbon through them. */
-  updateTrail(active, len) {
-    if (active) {
-      const base = new THREE.Vector3(len * 0.3, 0, 0).applyMatrix4(this.blade.matrixWorld);
-      const tip = new THREE.Vector3(len + 2, 0, 0).applyMatrix4(this.blade.matrixWorld);
-      this.trail.unshift([base, tip]);
+  /**
+   * Keep the last few blade angles and draw a ribbon along the arc between them.
+   * Angles are interpolated, so even a swing that covers 60 degrees in one frame
+   * leaves a smooth curve rather than a flat slab.
+   */
+  updateTrail(sample) {
+    if (sample) {
+      this.trail.unshift(sample);
       if (this.trail.length > TRAIL_LEN) this.trail.pop();
     } else if (this.trail.length) {
-      this.trail.pop(); // let the ribbon shrink away rather than vanish
+      this.trail.pop(); // shrink away rather than vanish
     }
+    const n = this.trail.length;
+    this.trailMesh.visible = n > 1;
+    if (n < 2) return;
+
     const pos = this.trailMesh.geometry.attributes.position;
     const alpha = this.trailMesh.geometry.attributes.alpha;
-    for (let i = 0; i < TRAIL_LEN; i++) {
-      const seg = this.trail[Math.min(i, this.trail.length - 1)];
-      for (let j = 0; j < 2; j++) {
-        const v = seg ? seg[j] : new THREE.Vector3();
-        pos.setXYZ(i * 2 + j, v.x, v.y, v.z);
-        alpha.setX(i * 2 + j, seg && i < this.trail.length ? (1 - i / TRAIL_LEN) * (j ? 1 : 0.25) : 0);
-      }
+    const m = this.body.matrixWorld;
+    const v = new THREE.Vector3();
+    const span = (n - 1) * TRAIL_SUB;
+    for (let k = 0; k < TRAIL_PTS; k++) {
+      const kk = Math.min(k, span);
+      const i = Math.floor(kk / TRAIL_SUB);
+      const t = (kk - i * TRAIL_SUB) / TRAIL_SUB;
+      const p = this.trail[i];
+      const q = this.trail[Math.min(i + 1, n - 1)];
+      const a = (p.a + (q.a - p.a) * t) * DEG;
+      const hx = p.hx + (q.hx - p.hx) * t;
+      const hy = p.hy + (q.hy - p.hy) * t;
+      const len = p.len + (q.len - p.len) * t;
+      const fade = k <= span ? Math.pow(1 - kk / span, 1.6) : 0;
+      // Inner edge near the hand is faint, the tip edge is bright.
+      [len * 0.35, len + 2].forEach((r, j) => {
+        v.set(hx + Math.cos(a) * r, hy + Math.sin(a) * r, 9).applyMatrix4(m);
+        pos.setXYZ(k * 2 + j, v.x, v.y, v.z);
+        alpha.setX(k * 2 + j, fade * (j ? 1 : 0.1));
+      });
     }
     pos.needsUpdate = true;
     alpha.needsUpdate = true;
-    this.trailMesh.visible = this.trail.length > 1;
   }
 
   dispose() {

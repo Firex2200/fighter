@@ -13,13 +13,13 @@ born in a thunderstorm to a village swordsmith and a storm spirit. Straw hat, lo
 blade, short temper. Push him far enough and the blade's edge splits open to let
 the storm out — which is why it only lights up when he attacks.
 
-Both players are Rook; they're told apart by costume. P1 wears **Default**
-(indigo / saffron / teal), P2 wears **Ember** (charcoal / red / gold). **Frost**
-and **Moss** are defined in `src/rook.js` and can be swapped in by editing
-`PLAYER_COSTUMES` in `src/characters.js`.
+Both players are Rook, told apart by costume: **Default** (indigo / saffron /
+teal), **Ember** (charcoal / red / gold), **Frost** (white / blue / ice) or
+**Moss** (green / lime / mint), picked on the costume-select screen before each
+fight.
 
-He's drawn in code rather than loaded as an image, so a costume is a three-colour
-swap rather than a hue shift, and he stays sharp at any size on any screen. His
+He's built in 3D from code rather than loaded from model files, so a costume is
+an exact three-colour swap rather than a hue shift. His
 stats come straight off the concept sheet (Weight 5, Ground 8, Air 7, Power 7,
 Range 8, Recovery 6) — the mapping to game values is documented at the top of
 `src/characters.js`.
@@ -131,23 +131,43 @@ ledge) and `cpu` (the AI recovers, blocks, and can finish a whole match).
 ## How it's built
 
 No build step, no `node_modules`, no installation. The browser loads the source
-files directly. The only dependency is `vendor/phaser.min.js`, committed to the
-repo so the game works offline.
+files directly. The one dependency is **Three.js** (3D graphics, MIT license) in
+`vendor/three/`, committed to the repo so the game works offline.
 
-| File                | Does                                                       |
-| ------------------- | ---------------------------------------------------------- |
-| `src/combat.js`     | Damage, knockback, hitstun, launch angle. Pure math.        |
-| `src/characters.js` | Fighter stats and all 12 moves — tune the game here.        |
-| `src/cpu.js`        | The CPU opponent.                                           |
-| `src/rook.js`       | Rook's artwork, animation and the four costume palettes.   |
-| `src/stage.js`      | Platform layout and blast zones.                            |
-| `src/fighter.js`    | Movement, jumps, attacks, state machine.                    |
-| `src/input.js`      | Keyboard and gamepad merged into one set of actions.        |
-| `src/scenes/`       | Everything that draws to the screen.                        |
-| `scripts/`          | Builds the double-clickable launcher apps.                  |
+| File                | Does                                                        |
+| ------------------- | ----------------------------------------------------------- |
+| `src/combat.js`     | Damage, knockback, hitstun, launch angle. Pure math.         |
+| `src/characters.js` | Fighter stats and all 12 moves — tune the game here.         |
+| `src/fighter.js`    | Movement, jumps, attacks, shield, ledge: the state machine.  |
+| `src/match.js`      | One match: CPU, hitlag, stats, events for effects and sound. |
+| `src/cpu.js`        | The CPU opponent.                                            |
+| `src/camera.js`     | How the camera frames the fight.                             |
+| `src/stage.js`      | Platform layout and blast zones.                             |
+| `src/rook.js`       | Rook's costumes, and where every body part goes per pose.    |
+| `src/render/`       | The 3D world: Rook, stage, sky, effects, lighting, glow.     |
+| `src/ui/`           | Title, costume select, damage cards, GAME!, results.         |
+| `src/app.js`        | The game loop and moving between screens.                    |
+| `src/sound.js`      | Sound effects, generated in code.                            |
+| `src/input.js`, `src/touch.js` | Keyboard, controller and touch, merged.           |
+| `scripts/`          | Builds the double-clickable launcher apps.                   |
 
-`combat.js`, `fighter.js` and `stage.js` have no Phaser dependency at all, which is
-why a full match can be simulated in tests without a browser.
+Gameplay (`combat`, `fighter`, `match`, `cpu`, `camera`, `stage`) never touches
+the 3D code, which is why whole matches run in the tests without a browser, and
+why the drawing could be swapped from 2D to 3D without changing how it plays.
+
+**Graphics quality** picks itself: high on a laptop or Xbox, medium on a phone,
+and it steps down automatically if frames run slow. Add `?quality=low` to the
+address to force the lightest setting.
+
+**Rook's 3D model** is built from shapes in code (`src/render/rook3d.js`). A
+sculpted model, e.g. generated from the concept turnaround, can replace it later:
+it only has to follow the same pose data from `rigPose()` in `src/rook.js`.
+
+### The 2D version
+
+The previous 2D version is saved as `v1-2d` in the project history. To go back
+to it, ask Claude to "restore the 2D version", or run
+`git checkout v1-2d -- .` in the project folder and publish.
 
 The combat math follows Super Smash Bros. Ultimate's publicly documented formulas
 (SmashWiki, Kurogane Hammer) so the game feels mechanically right. Game mechanics
